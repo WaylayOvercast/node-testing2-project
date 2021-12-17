@@ -3,15 +3,14 @@ const bcrypt = require('bcryptjs')
 const router = express.Router()
 const Users = require('../users/users-model')
 const{
-  checkUsernameFree,
-  checkUsernameExists,
-  checkPasswordLength
+  checkLogin,
+  checkSubmission
 } = require('./auth-middleware')
 
 
 
 
-router.post('/register',checkUsernameFree,checkPasswordLength,  async (req, res, next) => {
+router.post('/register',checkSubmission, async (req, res, next) => {
     try {
       const { username, password } = req.body
       const newUser = {
@@ -26,17 +25,9 @@ router.post('/register',checkUsernameFree,checkPasswordLength,  async (req, res,
 })
 
 
-router.post('/login', checkUsernameExists, async (req, res, next) => {
+router.post('/login',checkLogin, async (req, res, next) => {
     try {
-      
-      const { username, password } = req.body
-      const [userFromDb] = await Users.findBy({ username })
-      
-      const verifies = bcrypt.compareSync(password, userFromDb.password)
-      if (verifies === false) {
-        return res.status(401).json({message: 'Invalid credentials'})
-      }else
-      req.session.user = userFromDb
+      const username = req.body.username
       res.status(200).json({message: `Welcome ${username}`})
     } catch (err) {
       next(err)

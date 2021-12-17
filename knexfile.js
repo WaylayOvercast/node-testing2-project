@@ -15,6 +15,12 @@ module.exports = {
     seeds: { directory: './data/seeds' },
   },
 
+  testing: {
+    ...sharedConfig,
+    connection: { filename: './data/test.db3' },
+    seeds: { directory: './data/seeds' },
+  },
+
   staging: {
     client: 'postgresql',
     connection: {
