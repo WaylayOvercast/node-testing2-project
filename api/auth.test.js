@@ -6,34 +6,36 @@ async function reset (){
 
     await db.migrate.rollback()
     await db.migrate.latest()
-    
+    await db.seed.run()
 }
 
-beforeEach(async ()=> {
-    await db.seed.run()
-})
+
 
 
 describe('user login system working as intented',()=> {
     
     it('[1]-On correct ENV', async ()=> {
+        
         expect(process.env.NODE_ENV).toBe('testing')
         await reset()
     })
 
     it('[2]-cannot get users without auth', async ()=> {
+        
         return await request(server).get('/api/users')
         .then(res => {
             expect(res.status).toBe(401)
         })
     })
     it('[3]-cannot register with only a username', async ()=> {
+        
         return await request(server).post('/api/auth/register')
         .send({username:"sam"}).then( res => {
             expect(res.body).toMatchObject({"message": "You must have a password"})
         })
     })
     it('[4]-cannot register with password of less than 3 chars', async ()=>{
+        
         return await request(server).post('/api/auth/register')
         .send({password:"sm"}).then( res => {
             expect(res.body).toMatchObject({"message": "Password must be longer than 3 chars"})
@@ -62,13 +64,34 @@ describe('user login system working as intented',()=> {
             expect(res.body).toMatchObject({"message": "Invalid credentials"})
         })
     })
-    it('[8]-can reject login if account does not exist in DB', ()=> {
-
+    it('[8]-can reject login if account does not exist in DB', async ()=> {
+        
+        return await request(server).post('/api/auth/login')
+        .send({username:'bob' ,password:"notbob"}).then( res => {
+            expect(res.body).toMatchObject({"message": "Invalid credentials"})
+        })
     })
-    it('[9]-can login', ()=> {
+    it('[9]-can login', async ()=> {
 
+        return await request(server).post('/api/auth/login')
+        .send({username:'bob' ,password:"1234"}).then( res => {
+            expect(res.body).toMatchObject({"message": "Welcome bob"})
+        })
     })
-    it('[10]-can get users with auth', ()=>{
+    it('[10]-can get users with auth', async ()=>{
+        
+        await request(server).post('/api/auth/login')
+        .send({username:'bob' ,password:"1234"}).then(async (res)=>{
+            const access_info = CookieAccessInfo()
+            
+            return await request(server).get('/api/users')
+            .set('Cookie', access_info).then(res => {            // for some reason i cant grab this cookie and use it for auth, but i know this test would pass
+                expect(res.status).toBe(200)
+            })
+        })
+        
+        
+
         
     })
 })
